@@ -5,39 +5,18 @@ import os
 import shutil
 import random
 
-# --- 隠岐汽船フェリー「しらしま」& 隠岐の情景 ---
+# --- 隠岐汽船フェリー「しらしま」デザイン (精緻・重厚版) ---
 
-# 精密なフェリーしらしま（デモ画像を基にした究極版）
 FERRY_SHIRASHIMA = [
-    r"                   . _ _ _ _ _ _ _ _ _ _ _ _ .            ",
-    r"               . -'                           '- .        ",
-    r"           . -'        ____________________       '- .    ",
-    r"       . -'           |   |   |   |   |   |            '- .",
-    r"   . -'      _________|___|___|___|___|___|_________      '- .",
-    r"  /        /                                         \        \ ",
-    r" |        |      INDI LOVE (iO)        / \            |        |",
-    r" |________|___________________________| O |___________|________|",
-    r" |                                                            |",
-    r" |   隠 岐 汽 船 し ら し ま   (v) (o) (v) (o)                |",
-    r" |                                                            |",
-    r"  \__________________________________________________________/ ",
-    r"   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-]
-# 鬼太郎の仲間たち（デモ画像風のミニキャラ）
-KITARO_GANG = r" (・ω・) (・∀・) (o^-')b (  ^ω^)"
-
-# カモメ（随伴する隠岐の友）
-GULL_FRAMES = [
-    r" \ / ",
-    r" - - ",
-    r" / \ "
-]
-
-# 隠岐の島々（遠景）
-ISLANDS = [
-    r"      _    _          _        ",
-    r"    _/ \__/ \_      _/ \_      ",
-    r"  _/          \_  _/     \_    "
+    r"                                     ____________________        ",
+    r"               _____________________|                    |____   ",
+    r"           ___|                                               |  ",
+    r"       _.-'    OKI KISEN    - SHIRASHIMA -                    |  ",
+    r"    .-'                                                       |  ",
+    r"   |   [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ]    |  ",
+    r"   |__________________________________________________________|  ",
+    r"   \                                                         /   ",
+    r"    `-------------------------------------------------------'    "
 ]
 
 SMOKE_PATTERNS = [
@@ -63,22 +42,14 @@ def animate():
     f_height = len(FERRY_SHIRASHIMA)
     
     smoke_list = []
-    gulls = [[random.randint(20, 40), random.randint(2, 6), random.randint(0, 2)] for _ in range(3)]
     
-    # 航路開始
-    for x in range(cols + 30, -f_width - 30, -1):
+    # 以前の安定したロジックへ復元
+    for x in range(cols + 20, -f_width - 20, -1):
         clear_screen()
         
-        # --- 遠景: 隠岐の島々 ---
-        island_y = rows // 2 - 12
-        for i, line in enumerate(ISLANDS):
-            island_pos = (cols // 3) + (x // 10) # ゆっくり動く
-            if 0 < island_pos < cols:
-                print(f"\033[{island_y + i};{island_pos}H\033[32m{line}\033[0m")
-
-        # --- 環境: 煙 ---
-        if x % 4 == 0:
-            smoke_list.append([x + 65, rows // 2 - 9, 0])
+        # 煙の生成（安定した間隔）
+        if x % 6 == 0:
+            smoke_list.append([x + 38, rows // 2 - 7, 0])
         new_smoke = []
         for s in smoke_list:
             sx, sy, sf = s
@@ -87,53 +58,43 @@ def animate():
                 new_smoke.append([sx + 1, sy - 1, sf + 1])
         smoke_list = new_smoke
 
-        # --- 随伴者: カモメ ---
-        for g in gulls:
-            gx_off, gy, gf = g
-            gx = x + gx_off
-            if 0 < gx < cols:
-                print(f"\033[{gy};{gx}H\033[1m{GULL_FRAMES[gf]}\033[0m")
-            g[2] = (gf + 1) % 3
-
-        # --- 水面: 日本海の波 ---
-        y_wave = rows // 2 + 6
+        # 波の固定表示（ベースをブレさせない）
+        y_wave = rows // 2 + 5
         print(f"\033[{y_wave};1H\033[34m" + "~" * cols + "\033[0m")
         wave_dyn = "  _.-'  " * (cols // 8 + 1)
         print(f"\033[{y_wave + 1};1H\033[36m" + wave_dyn[x % 8 : x % 8 + cols] + "\033[0m")
 
-        # --- 主役: フェリーしらしま ---
+        # 船体の表示（重厚感のある低重心デザイン）
         y_ship = rows // 2 - f_height // 2
-        bob = 1 if (x // 5) % 4 < 2 else 0
+        bob = 1 if (x // 6) % 4 < 2 else 0
         
         for i, line in enumerate(FERRY_SHIRASHIMA):
             y_pos = y_ship + i + bob
             if 0 < y_pos < rows:
                 if 0 <= x < cols - f_width:
-                    # 彩色（しらしまの赤と青のラインをイメージ）
-                    colored = line.replace("OKI", "\033[1;31mOKI\033[0m")
-                    colored = colored.replace("鬼太郎フェリー", "\033[1;33m鬼太郎フェリー\033[0m")
+                    # 彩色（ネイビーとホワイトを基調に）
+                    colored = line.replace("OKI KISEN", "\033[1;34mOKI KISEN\033[0m")
+                    colored = colored.replace("SHIRASHIMA", "\033[1;37mSHIRASHIMA\033[0m")
                     colored = colored.replace("[ ]", "\033[34m[ ]\033[0m")
-                    colored = colored.replace("(O)", "\033[1;37m(O)\033[0m") # 救命浮輪
                     print(f"\033[{y_pos};{x}H{colored}", end="")
                 elif x < 0:
                     print(f"\033[{y_pos};1H{line[abs(x):]}", end="")
                 else:
                     print(f"\033[{y_pos};{x}H{line[:cols-x]}", end="")
 
-        # --- 隠岐イズム ---
         if x == cols // 2:
-            msg = "🚢  隠岐諸島へようこそ！ - Welcome to the Oki Islands - 🚢"
-            print(f"\033[{rows // 2 - 12};{cols // 2 - len(msg)//2}H\033[1;32m{msg}\033[0m")
+            msg = "*** Welcome to OKI Islands ***"
+            print(f"\033[{rows // 2 - 8};{cols // 2 - len(msg)//2}H\033[1;37m{msg}\033[0m")
 
         sys.stdout.flush()
-        time.sleep(0.03)
+        time.sleep(0.04)
 
 if __name__ == "__main__":
-    print("\033[?25l", end="") # カーソル非表示
+    print("\033[?25l", end="") 
     try:
         animate()
     except KeyboardInterrupt:
         pass
     finally:
-        print("\033[?25h", end="") # カーソル再表示
+        print("\033[?25h", end="") 
         clear_screen()
