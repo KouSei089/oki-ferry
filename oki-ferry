@@ -3,57 +3,111 @@ import time
 import sys
 import os
 import shutil
+import random
 
-# 隠岐汽船フェリー「おき」風のASCIIアート
-FERRY_OKI = [
-    r"      ____________________          ",
-    r"      |                  |          ",
-    r"   ___|__________________|___       ",
-    r"  |                          |      ",
-    r"  |     OKI KISEN            |      ",
-    r"  |__________________________|      ",
-    r"   \________________________/       ",
-    r"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+# 隠岐汽船フェリー「おき」風のASCIIアート（詳細版）
+# 煙のエフェクトを動的に追加するため、船体のみを定義
+FERRY_BODY = [
+    r"                         __________________________",
+    r"                        |  |  |  |  |  |  |  |  |  |",
+    r"               _________|__|__|__|__|__|__|__|__|__|________",
+    r"            _ /                                             \ _",
+    r"           /  \      OKI KISEN    - FERRY OKI -             /  \ ",
+    r"     _____/____\___________________________________________/____\____",
+    r"    |                                                                |",
+    r"    |   [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ]  |",
+    r"  / \________________________________________________________________/ \ ",
+    r"  \____________________________________________________________________/ "
+]
+
+SMOKE_PATTERNS = [
+    r"   (  )  ",
+    r"  (    ) ",
+    r" (      )",
+    r"(        )"
 ]
 
 def clear_screen():
-    os.system('clear')
+    print("\033[2J\033[H", end="")
 
-def print_ferry(offset, width):
-    ferry_width = len(FERRY_OKI[0])
-    for line in FERRY_OKI:
-        # 画面外に出る部分をカットする
-        if offset < 0:
-            visible_part = line[abs(offset):]
-            print(" " * 0 + visible_part)
-        elif offset + ferry_width > width:
-            visible_part = line[:width - offset]
-            print(" " * offset + visible_part)
-        else:
-            print(" " * offset + line)
-
-def animate():
-    # ターミナルサイズの取得
+def get_terminal_size():
     try:
         columns, rows = shutil.get_terminal_size()
     except:
-        columns = 80
+        columns, rows = 80, 24
+    return columns, rows
 
-    ferry_width = len(FERRY_OKI[0])
+def animate():
+    cols, rows = get_terminal_size()
+    ferry_width = len(FERRY_BODY[0])
+    ferry_height = len(FERRY_BODY)
     
-    # 右から左へ移動
-    for i in range(columns, -ferry_width, -1):
+    # 煙の状態管理
+    smoke_list = [] # (x, y, frame)
+    
+    # アニメーションループ
+    for x in range(cols + 20, -ferry_width - 20, -1):
         clear_screen()
-        # 垂直方向の中央付近に表示
-        print("\n" * (rows // 2 - len(FERRY_OKI) // 2))
-        print_ferry(i, columns)
+        
+        # スクリーンシェイク（大袈裟な振動）
+        shake_x = random.randint(-1, 1) if x % 2 == 0 else 0
+        shake_y = random.randint(0, 1) if x % 3 == 0 else 0
+        
+        # 煙の生成（煙突の位置付近）
+        if x % 3 == 0:
+            smoke_list.append([x + 55, rows // 2 - 8, 0])
+            
+        # 煙の更新と表示
+        new_smoke = []
+        for s in smoke_list:
+            sx, sy, sf = s
+            if sf < len(SMOKE_PATTERNS) and sx < cols:
+                # 煙を表示
+                print(f"\033[{sy + shake_y};{sx + shake_x}H{SMOKE_PATTERNS[sf]}", end="")
+                new_smoke.append([sx + 1, sy - 1, sf + 1]) # 煙は上にのぼりながら消える
+        smoke_list = new_smoke
+
+        # 波の飛沫
+        wave = "~" * cols
+        wave_alt = " " * (x % 4) + "- " * (cols // 2)
+        print(f"\033[{rows // 2 + 5 + shake_y};1H\033[34m{wave}\033[0m")
+        print(f"\033[{rows // 2 + 6 + shake_y};1H\033[36m{wave_alt}\033[0m")
+
+        # 船体の表示
+        y_center = rows // 2 - ferry_height // 2
+        # 上下運動（波に揺られる）
+        bobbing = 1 if x % 10 < 5 else 0
+        
+        for i, line in enumerate(FERRY_BODY):
+            y_pos = y_center + i + bobbing + shake_y
+            if 0 < y_pos < rows:
+                # 船体の描画
+                if x < 0:
+                    visible = line[abs(x):]
+                    print(f"\033[{y_pos};1H{visible}", end="")
+                elif x + ferry_width > cols:
+                    visible = line[:cols - x]
+                    print(f"\033[{y_pos};{x + shake_x}H{visible}", end="")
+                else:
+                    # 船体を白、窓を青っぽくする等の装飾（簡易）
+                    color_line = line.replace("[ ]", "\033[34m[ ]\033[0m")
+                    print(f"\033[{y_pos};{x + shake_x}H{color_line}", end="")
+
+        # 隠岐の島のメッセージ（大袈裟に）
+        if x == cols // 2:
+           print(f"\033[{rows // 2 - 10};{cols // 2 - 10}H\033[1;31mWELCOME TO OKI ISLANDS!!!\033[0m")
+
         sys.stdout.flush()
-        time.sleep(0.05)
+        time.sleep(0.04)
 
 if __name__ == "__main__":
+    # カーソルを隠す
+    print("\033[?25l", end="")
     try:
         animate()
     except KeyboardInterrupt:
         pass
     finally:
+        # カーソルを再表示してクリア
+        print("\033[?25h", end="")
         clear_screen()
