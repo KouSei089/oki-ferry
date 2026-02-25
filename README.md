@@ -3,7 +3,7 @@
 隠岐の島々を愛するすべてのターミナルユーザーへ。
 `sl` コマンドのように、隠岐汽船のフェリーがターミナルを颯爽と（あるいは大袈裟に）横切るコマンドです。
 
-![oki-ferry demo image](https://via.placeholder.com/800x400.png?text=Oki-Ferry+Animation+Demo)
+![oki-ferry demo image](./assets/demo.png)
 
 ## 特徴
 
