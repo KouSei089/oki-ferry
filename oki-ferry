@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+import time
+import sys
+import os
+import shutil
+
+# 隠岐汽船フェリー「おき」風のASCIIアート
+FERRY_OKI = [
+    r"      ____________________          ",
+    r"      |                  |          ",
+    r"   ___|__________________|___       ",
+    r"  |                          |      ",
+    r"  |     OKI KISEN            |      ",
+    r"  |__________________________|      ",
+    r"   \________________________/       ",
+    r"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+]
+
+def clear_screen():
+    os.system('clear')
+
+def print_ferry(offset, width):
+    ferry_width = len(FERRY_OKI[0])
+    for line in FERRY_OKI:
+        # 画面外に出る部分をカットする
+        if offset < 0:
+            visible_part = line[abs(offset):]
+            print(" " * 0 + visible_part)
+        elif offset + ferry_width > width:
+            visible_part = line[:width - offset]
+            print(" " * offset + visible_part)
+        else:
+            print(" " * offset + line)
+
+def animate():
+    # ターミナルサイズの取得
+    try:
+        columns, rows = shutil.get_terminal_size()
+    except:
+        columns = 80
+
+    ferry_width = len(FERRY_OKI[0])
+    
+    # 右から左へ移動
+    for i in range(columns, -ferry_width, -1):
+        clear_screen()
+        # 垂直方向の中央付近に表示
+        print("\n" * (rows // 2 - len(FERRY_OKI) // 2))
+        print_ferry(i, columns)
+        sys.stdout.flush()
+        time.sleep(0.05)
+
+if __name__ == "__main__":
+    try:
+        animate()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        clear_screen()
