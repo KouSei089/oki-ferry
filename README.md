@@ -16,7 +16,7 @@
 現在、独自の Tap を介して提供されています：
 
 ```bash
-brew tap izumi-h/oki-ferry
+brew tap KouSei089/oki-ferry
 brew install oki-ferry
 ```
 
